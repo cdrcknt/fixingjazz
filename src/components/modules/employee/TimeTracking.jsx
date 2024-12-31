@@ -85,6 +85,11 @@ const TimeTracking = () => {
     }
   };
 
+  const isCurrentlyWorking = () => {
+    const latestEntry = timeEntries[0];
+    return latestEntry && !latestEntry.clock_out;
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 mb-6">
@@ -117,16 +122,16 @@ const TimeTracking = () => {
               <div className="flex gap-4">
                 <button
                   onClick={handleClockIn}
-                  disabled={loading}
-                  className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                  disabled={loading || isCurrentlyWorking()}
+                  className={`flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors`}
                 >
                   <Clock className="w-5 h-5 inline mr-2" />
                   Clock In
                 </button>
                 <button
                   onClick={handleClockOut}
-                  disabled={loading}
-                  className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                  disabled={loading || !isCurrentlyWorking()}
+                  className={`flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors`}
                 >
                   <Clock className="w-5 h-5 inline mr-2" />
                   Clock Out

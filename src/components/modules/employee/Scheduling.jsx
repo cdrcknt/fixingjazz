@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabaseClient';
-import { Calendar, Clock, User, Plus } from 'lucide-react';
+import { Calendar, Clock, User, Plus, Edit2, Save, X } from 'lucide-react';
 
 const Scheduling = () => {
   const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [schedules, setSchedules] = useState([]);
+  const [editingSchedule, setEditingSchedule] = useState(null);
   const [newSchedule, setNewSchedule] = useState({
     date: '',
     start_time: '',
     end_time: '',
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchEmployees();
@@ -70,6 +72,25 @@ const Scheduling = () => {
       fetchSchedules();
     } catch (error) {
       console.error('Error creating schedule:', error);
+    }
+  };
+
+  const handleEditSubmit = async () => {
+    try {
+      const { error } = await supabase
+        .from('schedules')
+        .update({
+          date: editingSchedule.date,
+          start_time: editingSchedule.start_time,
+          end_time: editingSchedule.end_time
+        })
+        .eq('id', editingSchedule.id);
+
+      if (error) throw error;
+      setEditingSchedule(null);
+      fetchSchedules();
+    } catch (error) {
+      console.error('Error updating schedule:', error);
     }
   };
 
@@ -156,21 +177,84 @@ const Scheduling = () => {
                 <div className="space-y-3">
                   {schedules.map((schedule) => (
                     <div key={schedule.id} className="bg-white p-4 rounded-lg border border-gray-100 hover:shadow-md transition-shadow">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-purple-50 rounded-lg">
-                            <Calendar className="w-5 h-5 text-purple-600" />
+                      {editingSchedule?.id === schedule.id ? (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-3 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                              <input
+                                type="date"
+                                value={editingSchedule.date}
+                                onChange={(e) => setEditingSchedule({
+                                  ...editingSchedule,
+                                  date: e.target.value
+                                })}
+                                className="w-full p-2 border rounded-lg"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                              <input
+                                type="time"
+                                value={editingSchedule.start_time}
+                                onChange={(e) => setEditingSchedule({
+                                  ...editingSchedule,
+                                  start_time: e.target.value
+                                })}
+                                className="w-full p-2 border rounded-lg"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                              <input
+                                type="time"
+                                value={editingSchedule.end_time}
+                                onChange={(e) => setEditingSchedule({
+                                  ...editingSchedule,
+                                  end_time: e.target.value
+                                })}
+                                className="w-full p-2 border rounded-lg"
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {new Date(schedule.date).toLocaleDateString()}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {schedule.start_time} - {schedule.end_time}
-                            </p>
+                          <div className="flex justify-end space-x-2">
+                            <button
+                              onClick={() => setEditingSchedule(null)}
+                              className="px-3 py-1 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={handleEditSubmit}
+                              className="px-3 py-1 text-white bg-purple-600 rounded-lg hover:bg-purple-700"
+                            >
+                              <Save className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-purple-50 rounded-lg">
+                              <Calendar className="w-5 h-5 text-purple-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {new Date(schedule.date).toLocaleDateString()}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {schedule.start_time} - {schedule.end_time}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => setEditingSchedule(schedule)}
+                            className="p-2 text-gray-400 hover:text-purple-600 transition-colors"
+                          >
+                            <Edit2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

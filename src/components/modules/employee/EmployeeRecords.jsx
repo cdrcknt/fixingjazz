@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabaseClient';
-import { User, Mail, Calendar, UserCircle, Briefcase, Phone, MapPin, Edit2, Save, X } from 'lucide-react';
+import { User, Mail, Calendar, UserCircle, Briefcase, Phone, MapPin, Edit2, Save, X, ChevronDown, ChevronRight } from 'lucide-react';
 
 const EmployeeRecords = () => {
   const [employees, setEmployees] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchEmployees();
@@ -22,6 +24,8 @@ const EmployeeRecords = () => {
       setEmployees(data || []);
     } catch (error) {
       console.error('Error fetching employees:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -51,6 +55,10 @@ const EmployeeRecords = () => {
       ...editForm,
       [e.target.name]: e.target.value
     });
+  };
+
+  const toggleExpand = (id) => {
+    setExpandedId(expandedId === id ? null : id);
   };
 
   return (
@@ -97,11 +105,71 @@ const EmployeeRecords = () => {
                     />
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
+                    <input
+                      type="text"
+                      name="position"
+                      value={editForm.position}
+                      onChange={handleChange}
+                      className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                    <input
+                      type="text"
+                      name="department"
+                      value={editForm.department}
+                      onChange={handleChange}
+                      className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Birth Date</label>
                     <input
                       type="date"
                       name="birth_date"
                       value={editForm.birth_date}
+                      onChange={handleChange}
+                      className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Date Hired</label>
+                    <input
+                      type="date"
+                      name="date_hired"
+                      value={editForm.date_hired}
+                      onChange={handleChange}
+                      className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact</label>
+                    <input
+                      type="text"
+                      name="emergency_contact"
+                      value={editForm.emergency_contact}
+                      onChange={handleChange}
+                      className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Phone</label>
+                    <input
+                      type="text"
+                      name="emergency_phone"
+                      value={editForm.emergency_phone}
+                      onChange={handleChange}
+                      className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                    <input
+                      type="text"
+                      name="address"
+                      value={editForm.address}
                       onChange={handleChange}
                       className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     />
@@ -124,7 +192,10 @@ const EmployeeRecords = () => {
               </div>
             ) : (
               <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
+                <div 
+                  className="flex justify-between items-start cursor-pointer"
+                  onClick={() => toggleExpand(employee.id)}
+                >
                   <div className="flex items-center space-x-4">
                     <div className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
                       <User className="w-6 h-6 text-blue-600" />
@@ -134,23 +205,60 @@ const EmployeeRecords = () => {
                       <p className="text-blue-600 font-medium">{employee.role}</p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleEdit(employee)}
-                    className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-                  >
-                    <Edit2 className="w-5 h-5" />
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div className="flex items-center space-x-3 text-gray-600">
-                    <Mail className="w-5 h-5 text-gray-400" />
-                    <span>{employee.email}</span>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(employee);
+                      }}
+                      className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
+                    >
+                      <Edit2 className="w-5 h-5" />
+                    </button>
+                    {expandedId === employee.id ? (
+                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                    )}
                   </div>
-                  <div className="flex items-center space-x-3 text-gray-600">
-                    <Calendar className="w-5 h-5 text-gray-400" />
-                    <span>{new Date(employee.birth_date).toLocaleDateString()}</span>
-                  </div>
                 </div>
+
+                {expandedId === employee.id && (
+                  <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <Mail className="w-5 h-5 text-gray-400" />
+                        <span className="text-gray-600">{employee.email}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Briefcase className="w-5 h-5 text-gray-400" />
+                        <span className="text-gray-600">{employee.position} - {employee.department}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-5 h-5 text-gray-400" />
+                        <span className="text-gray-600">Birth Date: {new Date(employee.birth_date).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-5 h-5 text-gray-400" />
+                        <span className="text-gray-600">Hired: {new Date(employee.date_hired).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <User className="w-5 h-5 text-gray-400" />
+                        <span className="text-gray-600">Emergency Contact: {employee.emergency_contact}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Phone className="w-5 h-5 text-gray-400" />
+                        <span className="text-gray-600">Emergency Phone: {employee.emergency_phone}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="w-5 h-5 text-gray-400" />
+                        <span className="text-gray-600">{employee.address}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
