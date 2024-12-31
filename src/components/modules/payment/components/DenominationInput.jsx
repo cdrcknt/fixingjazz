@@ -25,8 +25,8 @@ const DenominationInput = ({ onTotalChange, minimumAmount }) => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="flex items-center justify-between mb-4">
         <h5 className="font-medium text-gray-900">Cash Denominations</h5>
         <div className="flex items-center text-green-600">
           <Calculator className="w-4 h-4 mr-1" />
@@ -62,7 +62,7 @@ const DenominationInput = ({ onTotalChange, minimumAmount }) => {
       </div>
 
       {calculateTotal() < minimumAmount && (
-        <p className="text-sm text-red-600">
+        <p className="text-sm text-red-600 mt-4">
           Amount is less than the required total (₱{minimumAmount.toFixed(2)})
         </p>
       )}

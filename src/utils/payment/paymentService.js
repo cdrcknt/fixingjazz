@@ -16,36 +16,57 @@ export const processPayment = async (
     throw new Error('Insufficient amount tendered');
   }
 
-  // Update order with discount information
-  const { error: orderError } = await supabase
-    .from('orders')
-    .update({
-      total_before_discount: order.total_amount,
-      discount_amount: discount,
-      applied_promotion_id: selectedPromo?.id || null,
-      total_amount: finalAmount
-    })
-    .eq('id', order.id);
+  try {
+    // Start a transaction
+    const { data: { user } } = await supabase.auth.getUser();
 
-  if (orderError) throw orderError;
+    // Update order with discount information and status
+    const { error: orderError } = await supabase
+      .from('orders')
+      .update({
+        total_before_discount: order.total_amount,
+        discount_amount: discount,
+        applied_promotion_id: selectedPromo?.id || null,
+        total_amount: finalAmount,
+        status: 'pending' // Keep as pending until completed in order queue
+      })
+      .eq('id', order.id);
 
-  // Create transaction record
-  const { error: transactionError } = await supabase
-    .from('transactions')
-    .insert([{
-      order_id: order.id,
-      total_amount: order.total_amount,
-      discount_amount: discount,
-      discount_type: discountType,
-      promotion_id: selectedPromo?.id,
-      final_amount: finalAmount,
-      amount_tendered: amountTendered,
-      change_amount: changeAmount,
-      payment_status: 'completed',
-      created_by: (await supabase.auth.getUser()).data.user?.id
-    }]);
+    if (orderError) throw orderError;
 
-  if (transactionError) throw transactionError;
+    // Create transaction record
+    const { error: transactionError } = await supabase
+      .from('transactions')
+      .insert([{
+        order_id: order.id,
+        total_amount: order.total_amount,
+        discount_amount: discount,
+        discount_type: discountType,
+        promotion_id: selectedPromo?.id,
+        final_amount: finalAmount,
+        amount_tendered: amountTendered,
+        change_amount: changeAmount,
+        payment_status: 'completed',
+        created_by: user.id
+      }]);
 
-  return { finalAmount, changeAmount };
+    if (transactionError) throw transactionError;
+
+    // Add to order status history
+    const { error: historyError } = await supabase
+      .from('order_status_history')
+      .insert([{
+        order_id: order.id,
+        previous_status: order.status,
+        new_status: 'pending',
+        changed_by: user.id,
+        notes: 'Payment processed'
+      }]);
+
+    if (historyError) throw historyError;
+
+    return { finalAmount, changeAmount };
+  } catch (error) {
+    throw new Error('Failed to process payment: ' + error.message);
+  }
 };

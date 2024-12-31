@@ -50,6 +50,9 @@ const OrderQueue = () => {
 
   const updateOrderStatus = async (orderId, status) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Update order status
       const { error: orderError } = await supabase
         .from('orders')
         .update({ status })
@@ -63,7 +66,7 @@ const OrderQueue = () => {
         .insert([{
           order_id: orderId,
           new_status: status,
-          changed_by: (await supabase.auth.getUser()).data.user?.id
+          changed_by: user.id
         }]);
 
       if (historyError) throw historyError;
@@ -182,9 +185,16 @@ const OrderQueue = () => {
                     <div className="border-t pt-4">
                       <div className="flex justify-between items-center mb-4">
                         <span className="font-medium text-gray-700">Total Amount:</span>
-                        <span className="text-lg font-semibold text-gray-900">
-                          ${order.total_amount.toFixed(2)}
-                        </span>
+                        <div className="text-right">
+                          {order.total_before_discount !== order.total_amount && (
+                            <span className="text-sm text-gray-500 line-through mr-2">
+                              ${order.total_before_discount.toFixed(2)}
+                            </span>
+                          )}
+                          <span className="text-lg font-semibold text-gray-900">
+                            ${order.total_amount.toFixed(2)}
+                          </span>
+                        </div>
                       </div>
 
                       {order.status === 'pending' && (

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../../utils/supabaseClient';
 import { processPayment } from '../../../utils/payment/paymentService';
 import OrderSelection from './components/OrderSelection';
 import DiscountSelection from './components/DiscountSelection';
 import PaymentSummary from './components/PaymentSummary';
-import ReceiptModal from './components/ReceiptModal';
+import DenominationInput from './components/DenominationInput';
 
 const PaymentProcessing = () => {
   const [orders, setOrders] = useState([]);
@@ -14,9 +15,9 @@ const PaymentProcessing = () => {
   const [manualDiscount, setManualDiscount] = useState(0);
   const [discountType, setDiscountType] = useState('none');
   const [amountTendered, setAmountTendered] = useState(0);
-  const [showReceipt, setShowReceipt] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPendingOrders();
@@ -99,22 +100,13 @@ const PaymentProcessing = () => {
         amountTendered
       );
 
-      setShowReceipt(true);
-      resetForm();
-      fetchPendingOrders();
+      // Navigate to order queue after successful payment
+      navigate('/dashboard/order/queue');
     } catch (error) {
       setError(error.message);
     } finally {
       setLoading(false);
     }
-  };
-
-  const resetForm = () => {
-    setSelectedOrder(null);
-    setSelectedPromo(null);
-    setManualDiscount(0);
-    setDiscountType('none');
-    setAmountTendered(0);
   };
 
   return (
@@ -140,32 +132,38 @@ const PaymentProcessing = () => {
       </div>
 
       {selectedOrder && (
-        <PaymentSummary
-          order={selectedOrder}
-          discount={calculateDiscount()}
-          total={calculateTotal()}
-          amountTendered={amountTendered}
-          changeAmount={calculateChange()}
-          onAmountTenderedChange={setAmountTendered}
-          onSubmit={handlePayment}
-          loading={loading}
-          error={error}
-        />
-      )}
+        <div className="space-y-6">
+          <PaymentSummary
+            order={selectedOrder}
+            discount={calculateDiscount()}
+            total={calculateTotal()}
+            amountTendered={amountTendered}
+            changeAmount={calculateChange()}
+          />
+          
+          <DenominationInput
+            onTotalChange={setAmountTendered}
+            minimumAmount={calculateTotal()}
+          />
 
-      {showReceipt && (
-        <ReceiptModal
-          transaction={{
-            order: selectedOrder,
-            discount: calculateDiscount(),
-            finalAmount: calculateTotal(),
-            amountTendered,
-            change: calculateChange(),
-            discountType,
-            promotion: selectedPromo
-          }}
-          onClose={() => setShowReceipt(false)}
-        />
+          {error && (
+            <div className="bg-red-50 text-red-600 p-4 rounded-lg">
+              {error}
+            </div>
+          )}
+
+          <button
+            onClick={handlePayment}
+            disabled={loading || amountTendered < calculateTotal()}
+            className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
+              loading || amountTendered < calculateTotal()
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-green-600 text-white hover:bg-green-700'
+            }`}
+          >
+            {loading ? 'Processing...' : 'Complete Payment'}
+          </button>
+        </div>
       )}
     </div>
   );

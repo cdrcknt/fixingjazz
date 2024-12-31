@@ -1,17 +1,11 @@
 import React from 'react';
-import { AlertCircle } from 'lucide-react';
-import DenominationInput from './DenominationInput';
 
 const PaymentSummary = ({
   order,
   discount,
   total,
   amountTendered,
-  changeAmount,
-  onAmountTenderedChange,
-  onSubmit,
-  loading,
-  error
+  changeAmount
 }) => (
   <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
     <h4 className="text-xl font-semibold text-gray-900 mb-6">
@@ -35,13 +29,7 @@ const PaymentSummary = ({
         </div>
       </div>
 
-      {/* Cash Input */}
-      <DenominationInput
-        onTotalChange={onAmountTenderedChange}
-        minimumAmount={total}
-      />
-
-      {/* Change Calculation */}
+      {/* Amount and Change */}
       <div className="bg-gray-50 p-4 rounded-lg">
         <div className="flex justify-between items-center">
           <span className="text-gray-600">Amount Tendered:</span>
@@ -56,25 +44,6 @@ const PaymentSummary = ({
           </span>
         </div>
       </div>
-
-      {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-lg flex items-center">
-          <AlertCircle className="w-5 h-5 mr-2" />
-          {error}
-        </div>
-      )}
-
-      <button
-        onClick={onSubmit}
-        disabled={loading || amountTendered < total}
-        className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
-          loading || amountTendered < total
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            : 'bg-green-600 text-white hover:bg-green-700'
-        }`}
-      >
-        {loading ? 'Processing...' : 'Complete Payment'}
-      </button>
     </div>
   </div>
 );

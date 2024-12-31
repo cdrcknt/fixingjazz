@@ -16,13 +16,18 @@ const OrderSelection = ({ orders, selectedOrder, onSelectOrder }) => (
           }`}
         >
           <div className="flex justify-between items-center">
-            <div className="text-left">
-              <p className="font-medium text-gray-900">
-                Order #{order.order_number}
-              </p>
-              <p className="text-sm text-gray-500">
-                {order.order_items.length} items
-              </p>
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <Coffee className="w-5 h-5 text-green-600" />
+              </div>
+              <div className="text-left">
+                <p className="font-medium text-gray-900">
+                  Order #{order.order_number}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {order.order_items.length} items
+                </p>
+              </div>
             </div>
             <p className="text-lg font-semibold text-gray-900">
               ${order.total_amount.toFixed(2)}
