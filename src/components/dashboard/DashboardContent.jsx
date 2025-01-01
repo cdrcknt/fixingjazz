@@ -6,22 +6,60 @@ import QuickActions from './QuickActions';
 
 const DashboardContent = ({ user }) => {
   const [lowStockCount, setLowStockCount] = useState(0);
+  const [todayOrders, setTodayOrders] = useState(0);
+  const [totalSales, setTotalSales] = useState(0);
+  const [activeStaff, setActiveStaff] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchLowStockItems();
+    fetchDashboardData();
   }, []);
 
-  const fetchLowStockItems = async () => {
+  const fetchDashboardData = async () => {
     try {
-      const { data, error } = await supabase
+      // Get today's start and end timestamps
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      // Fetch today's orders count and total sales
+      const { data: transactionsData, error: transactionsError } = await supabase
+        .from('transactions')
+        .select('final_amount')
+        .gte('created_at', today.toISOString())
+        .lt('created_at', tomorrow.toISOString());
+
+      if (transactionsError) throw transactionsError;
+
+      // Calculate orders count and total sales
+      const ordersCount = transactionsData?.length || 0;
+      const todaySales = transactionsData?.reduce((sum, transaction) => sum + (transaction.final_amount || 0), 0) || 0;
+
+      // Fetch active staff count
+      const { data: staffData, error: staffError } = await supabase
+        .from('employees')
+        .select('id');
+
+      if (staffError) throw staffError;
+
+      // Fetch low stock items
+      const { data: stockData, error: stockError } = await supabase
         .from('stock_levels')
         .select('*')
         .lt('current_stock', 10);
 
-      if (error) throw error;
-      setLowStockCount(data.length);
+      if (stockError) throw stockError;
+
+      // Update state with fetched data
+      setTodayOrders(ordersCount);
+      setTotalSales(todaySales);
+      setActiveStaff(staffData?.length || 0);
+      setLowStockCount(stockData?.length || 0);
     } catch (error) {
-      console.error('Error fetching low stock items:', error);
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -43,28 +81,28 @@ const DashboardContent = ({ user }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <StatCard
             title="Today's Orders"
-            value="0"
+            value={loading ? "Loading..." : todayOrders.toString()}
             icon={ShoppingBag}
-            change="No previous data"
+            change={loading ? "Loading..." : `${todayOrders} orders today`}
             changeType="neutral"
           />
           <StatCard
             title="Total Sales"
-            value="$0"
+            value={loading ? "Loading..." : `$${totalSales.toFixed(2)}`}
             icon={DollarSign}
-            change="No previous data"
+            change={loading ? "Loading..." : `Revenue today`}
             changeType="neutral"
           />
           <StatCard
             title="Active Staff"
-            value="1"
+            value={loading ? "Loading..." : activeStaff.toString()}
             icon={Users}
-            change="Initial staff"
+            change={loading ? "Loading..." : `Total employees`}
             changeType="neutral"
           />
           <StatCard
             title="Low Stock Items"
-            value={lowStockCount.toString()}
+            value={loading ? "Loading..." : lowStockCount.toString()}
             icon={Package}
             change="Items below threshold"
             changeType="neutral"
@@ -91,6 +129,6 @@ const DashboardContent = ({ user }) => {
       </div>
     </div>
   );
-}
+};
 
 export default DashboardContent;

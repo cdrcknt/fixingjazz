@@ -50,7 +50,7 @@ const EmployeeRegistration = () => {
 
       if (authError) throw authError;
 
-      // Then create employee record
+      // Then create employee record without deleting existing ones
       const { error: employeeError } = await supabase
         .from('employees')
         .insert([{
@@ -73,6 +73,8 @@ const EmployeeRegistration = () => {
         type: 'success',
         text: 'Employee registered successfully!'
       });
+      
+      // Clear form after successful registration
       setFormData({
         email: '',
         role: '',
