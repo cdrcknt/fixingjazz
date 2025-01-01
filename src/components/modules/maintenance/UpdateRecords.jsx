@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../utils/supabaseClient';
 import { Search } from 'lucide-react';
-import { updateEmployee, deleteEmployee } from '../../../utils/employee/employeeService';
 import EditForm from './components/EditForm';
 import RecordItem from './components/RecordItem';
+import { updateRecord, deleteRecord, fetchRecords } from '../../../services/maintenanceService';
 
 const UpdateRecords = () => {
   const [activeTab, setActiveTab] = useState('employees');
@@ -13,19 +12,12 @@ const UpdateRecords = () => {
   const [editingRecord, setEditingRecord] = useState(null);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchRecords();
-  }, [activeTab]);
-
-  const fetchRecords = async () => {
+  const loadRecords = async () => {
     try {
-      const { data, error } = await supabase
-        .from(activeTab)
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setRecords(data || []);
+      setLoading(true);
+      const data = await fetchRecords(activeTab);
+      setRecords(data);
+      setError('');
     } catch (error) {
       console.error(`Error fetching ${activeTab}:`, error);
       setError(`Failed to fetch ${activeTab}`);
@@ -34,23 +26,23 @@ const UpdateRecords = () => {
     }
   };
 
+  useEffect(() => {
+    loadRecords();
+  }, [activeTab]);
+
   const handleUpdate = async (record) => {
     try {
       setLoading(true);
       setError('');
       
-      if (activeTab === 'employees') {
-        await updateEmployee(record);
-      } else {
-        const { error } = await supabase
-          .from(activeTab)
-          .update(record)
-          .eq('id', record.id);
-        if (error) throw error;
-      }
+      await updateRecord(activeTab, record.id, record);
+      
+      // Update the record in the local state
+      setRecords(prevRecords => 
+        prevRecords.map(r => r.id === record.id ? record : r)
+      );
       
       setEditingRecord(null);
-      await fetchRecords();
       setError('');
     } catch (error) {
       console.error(`Error updating ${activeTab}:`, error);
@@ -67,17 +59,10 @@ const UpdateRecords = () => {
       setLoading(true);
       setError('');
       
-      if (activeTab === 'employees') {
-        await deleteEmployee(id);
-      } else {
-        const { error } = await supabase
-          .from(activeTab)
-          .delete()
-          .eq('id', id);
-        if (error) throw error;
-      }
+      await deleteRecord(activeTab, id);
       
-      await fetchRecords();
+      // Remove the deleted record from the local state
+      setRecords(prevRecords => prevRecords.filter(record => record.id !== id));
       setError('');
     } catch (error) {
       console.error(`Error deleting ${activeTab}:`, error);
