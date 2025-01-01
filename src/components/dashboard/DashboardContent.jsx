@@ -9,6 +9,7 @@ const DashboardContent = ({ user }) => {
   const [todayOrders, setTodayOrders] = useState(0);
   const [totalSales, setTotalSales] = useState(0);
   const [activeStaff, setActiveStaff] = useState(0);
+  const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,11 +52,28 @@ const DashboardContent = ({ user }) => {
 
       if (stockError) throw stockError;
 
+      // Fetch recent orders
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items (
+            quantity,
+            unit_price,
+            products (name)
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (ordersError) throw ordersError;
+
       // Update state with fetched data
       setTodayOrders(ordersCount);
       setTotalSales(todaySales);
       setActiveStaff(staffData?.length || 0);
       setLowStockCount(stockData?.length || 0);
+      setRecentOrders(ordersData || []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -119,9 +137,35 @@ const DashboardContent = ({ user }) => {
                   View All
                 </button>
               </div>
-              <div className="text-center text-gray-500 py-8">
-                No orders available yet
-              </div>
+              
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+                  <p className="text-gray-500 mt-2">Loading orders...</p>
+                </div>
+              ) : recentOrders.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  No orders available yet
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentOrders.map((order) => (
+                    <div key={order.id} className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium text-gray-900">Order #{order.order_number}</h4>
+                          <p className="text-sm text-gray-500">
+                            {order.order_items?.length || 0} items • ${order.total_amount?.toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {new Date(order.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <QuickActions />
