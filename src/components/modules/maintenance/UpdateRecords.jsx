@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import EditForm from './components/EditForm';
 import RecordItem from './components/RecordItem';
-import { updateRecord, deleteRecord, fetchRecords } from '../../../services/maintenanceService';
+import { updateEmployee, deleteEmployee, fetchEmployees } from '../../../services/maintenance/employeeService';
 
 const UpdateRecords = () => {
-  const [activeTab, setActiveTab] = useState('employees');
+  const [activeTab] = useState('employees'); // Simplified for now to focus on employees
   const [records, setRecords] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -15,12 +15,12 @@ const UpdateRecords = () => {
   const loadRecords = async () => {
     try {
       setLoading(true);
-      const data = await fetchRecords(activeTab);
+      const data = await fetchEmployees();
       setRecords(data);
       setError('');
     } catch (error) {
-      console.error(`Error fetching ${activeTab}:`, error);
-      setError(`Failed to fetch ${activeTab}`);
+      console.error('Error fetching employees:', error);
+      setError('Failed to fetch employees');
     } finally {
       setLoading(false);
     }
@@ -28,45 +28,38 @@ const UpdateRecords = () => {
 
   useEffect(() => {
     loadRecords();
-  }, [activeTab]);
+  }, []);
 
   const handleUpdate = async (record) => {
     try {
       setLoading(true);
       setError('');
       
-      await updateRecord(activeTab, record.id, record);
-      
-      // Update the record in the local state
-      setRecords(prevRecords => 
-        prevRecords.map(r => r.id === record.id ? record : r)
-      );
+      await updateEmployee(record.id, record);
+      await loadRecords();
       
       setEditingRecord(null);
-      setError('');
     } catch (error) {
-      console.error(`Error updating ${activeTab}:`, error);
-      setError(`Failed to update ${activeTab}: ${error.message}`);
+      console.error('Error updating employee:', error);
+      setError(`Failed to update employee: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this record? This action cannot be undone.')) return;
+    if (!confirm('Are you sure you want to delete this employee? This action cannot be undone.')) return;
     
     try {
       setLoading(true);
       setError('');
       
-      await deleteRecord(activeTab, id);
+      await deleteEmployee(id);
+      await loadRecords();
       
-      // Remove the deleted record from the local state
-      setRecords(prevRecords => prevRecords.filter(record => record.id !== id));
-      setError('');
     } catch (error) {
-      console.error(`Error deleting ${activeTab}:`, error);
-      setError(`Failed to delete ${activeTab}: ${error.message}`);
+      console.error('Error deleting employee:', error);
+      setError(`Failed to delete employee: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -81,7 +74,7 @@ const UpdateRecords = () => {
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 mb-6">
         <h3 className="text-xl font-semibold text-gray-800 mb-2">Update Records</h3>
-        <p className="text-gray-600">Update or remove system records</p>
+        <p className="text-gray-600">Update or remove employee records</p>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -92,34 +85,11 @@ const UpdateRecords = () => {
         )}
         
         <div className="flex flex-col space-y-4">
-          <div className="flex space-x-4 mb-4">
-            <button
-              onClick={() => setActiveTab('employees')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                activeTab === 'employees'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Employees
-            </button>
-            <button
-              onClick={() => setActiveTab('products')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                activeTab === 'products'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Products
-            </button>
-          </div>
-
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               type="text"
-              placeholder="Search records..."
+              placeholder="Search employees..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
@@ -149,7 +119,7 @@ const UpdateRecords = () => {
                       <RecordItem
                         record={record}
                         onEdit={() => setEditingRecord(record)}
-                        onDelete={handleDelete}
+                        onDelete={() => handleDelete(record.id)}
                       />
                     )}
                   </div>
