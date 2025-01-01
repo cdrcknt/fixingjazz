@@ -97,13 +97,14 @@ const DashboardContent = ({ user }) => {
 
       <div className="p-6 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <StatCard
-            title="Today's Orders"
-            value={loading ? "Loading..." : todayOrders.toString()}
-            icon={ShoppingBag}
-            change={loading ? "Loading..." : `${todayOrders} orders today`}
-            changeType="neutral"
-          />
+        <StatCard
+  title="Today's Orders"
+  value={loading ? "Loading..." : todayOrders.toString()}
+  icon={ShoppingBag}
+  change={loading ? "Loading..." : `${todayOrders} orders today`}
+  changeType="neutral"
+/>
+
           <StatCard
             title="Total Sales"
             value={loading ? "Loading..." : `$${totalSales.toFixed(2)}`}
