@@ -1,30 +1,38 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingBag, Package, BarChart2 } from 'lucide-react';
 
 const QuickActions = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const actions = [
     { 
       title: 'New Order', 
       icon: ShoppingBag, 
       color: 'bg-blue-50 text-blue-600',
-      path: '/dashboard/order/new'
+      path: '/dashboard/order/new',
+      module: 'order'
     },
     { 
       title: 'Add Product', 
       icon: Package, 
       color: 'bg-green-50 text-green-600',
-      path: '/dashboard/registration/product'
+      path: '/dashboard/registration/product',
+      module: 'registration'
     },
     { 
       title: 'View Reports', 
       icon: BarChart2, 
       color: 'bg-purple-50 text-purple-600',
-      path: '/dashboard/reports'
+      path: '/dashboard/reports',
+      module: 'reports'
     },
   ];
+
+  const handleNavigation = (action) => {
+    navigate(action.path);
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
@@ -33,7 +41,7 @@ const QuickActions = () => {
         {actions.map((action, index) => (
           <button
             key={index}
-            onClick={() => navigate(action.path)}
+            onClick={() => handleNavigation(action)}
             className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
           >
             <div className={`p-2 rounded-lg ${action.color} group-hover:opacity-80 transition-opacity duration-200`}>
