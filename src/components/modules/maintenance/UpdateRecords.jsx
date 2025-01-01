@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabaseClient';
 import { Pencil, Trash2, Search } from 'lucide-react';
+import { updateEmployee, deleteEmployee } from '../../../utils/employee/employeeService';
 
 const UpdateRecords = () => {
   const [activeTab, setActiveTab] = useState('employees');
@@ -8,6 +9,7 @@ const UpdateRecords = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingRecord, setEditingRecord] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchRecords();
@@ -25,6 +27,7 @@ const UpdateRecords = () => {
       setRecords(data || []);
     } catch (error) {
       console.error(`Error fetching ${activeTab}:`, error);
+      setError(`Failed to fetch ${activeTab}`);
     } finally {
       setLoading(false);
     }
@@ -32,32 +35,50 @@ const UpdateRecords = () => {
 
   const handleUpdate = async (record) => {
     try {
-      const { error } = await supabase
-        .from(activeTab)
-        .update(record)
-        .eq('id', record.id);
-
-      if (error) throw error;
+      setLoading(true);
+      setError('');
+      if (activeTab === 'employees') {
+        await updateEmployee(record);
+      } else {
+        const { error } = await supabase
+          .from(activeTab)
+          .update(record)
+          .eq('id', record.id);
+        if (error) throw error;
+      }
       setEditingRecord(null);
-      fetchRecords();
+      await fetchRecords();
+      setError('');
     } catch (error) {
       console.error(`Error updating ${activeTab}:`, error);
+      setError(`Failed to update ${activeTab}: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this record?')) return;
+    if (!confirm('Are you sure you want to delete this record? This action cannot be undone.')) return;
     
     try {
-      const { error } = await supabase
-        .from(activeTab)
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      fetchRecords();
+      setLoading(true);
+      setError('');
+      if (activeTab === 'employees') {
+        await deleteEmployee(id);
+      } else {
+        const { error } = await supabase
+          .from(activeTab)
+          .delete()
+          .eq('id', id);
+        if (error) throw error;
+      }
+      await fetchRecords();
+      setError('');
     } catch (error) {
       console.error(`Error deleting ${activeTab}:`, error);
+      setError(`Failed to delete ${activeTab}: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -78,6 +99,12 @@ const UpdateRecords = () => {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-lg">
+            {error}
+          </div>
+        )}
+        
         <div className="flex flex-col space-y-4">
           <div className="flex space-x-4 mb-4">
             <button
@@ -103,14 +130,14 @@ const UpdateRecords = () => {
           </div>
 
           <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               type="text"
               placeholder="Search records..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className="pl-10 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             />
-            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           </div>
 
           <div className="mt-4">
@@ -129,41 +156,139 @@ const UpdateRecords = () => {
                     {editingRecord?.id === record.id ? (
                       <div className="space-y-4">
                         {activeTab === 'employees' ? (
-                          <>
-                            <input
-                              type="text"
-                              value={editingRecord.name}
-                              onChange={(e) => setEditingRecord({
-                                ...editingRecord,
-                                name: e.target.value
-                              })}
-                              className="w-full p-2 border rounded"
-                              placeholder="Name"
-                            />
-                            <input
-                              type="email"
-                              value={editingRecord.email}
-                              onChange={(e) => setEditingRecord({
-                                ...editingRecord,
-                                email: e.target.value
-                              })}
-                              className="w-full p-2 border rounded"
-                              placeholder="Email"
-                            />
-                            <select
-                              value={editingRecord.role}
-                              onChange={(e) => setEditingRecord({
-                                ...editingRecord,
-                                role: e.target.value
-                              })}
-                              className="w-full p-2 border rounded"
-                            >
-                              <option value="Barista">Barista</option>
-                              <option value="Cashier">Cashier</option>
-                              <option value="Manager">Manager</option>
-                              <option value="Supervisor">Supervisor</option>
-                            </select>
-                          </>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                              <input
+                                type="text"
+                                value={editingRecord.name}
+                                onChange={(e) => setEditingRecord({
+                                  ...editingRecord,
+                                  name: e.target.value
+                                })}
+                                className="w-full p-2 border rounded"
+                                placeholder="Full Name"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                              <input
+                                type="email"
+                                value={editingRecord.email}
+                                onChange={(e) => setEditingRecord({
+                                  ...editingRecord,
+                                  email: e.target.value
+                                })}
+                                className="w-full p-2 border rounded"
+                                placeholder="Email"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                              <select
+                                value={editingRecord.role}
+                                onChange={(e) => setEditingRecord({
+                                  ...editingRecord,
+                                  role: e.target.value
+                                })}
+                                className="w-full p-2 border rounded"
+                              >
+                                <option value="Barista">Barista</option>
+                                <option value="Cashier">Cashier</option>
+                                <option value="Manager">Manager</option>
+                                <option value="Supervisor">Supervisor</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
+                              <input
+                                type="text"
+                                value={editingRecord.position}
+                                onChange={(e) => setEditingRecord({
+                                  ...editingRecord,
+                                  position: e.target.value
+                                })}
+                                className="w-full p-2 border rounded"
+                                placeholder="Position"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                              <input
+                                type="text"
+                                value={editingRecord.department}
+                                onChange={(e) => setEditingRecord({
+                                  ...editingRecord,
+                                  department: e.target.value
+                                })}
+                                className="w-full p-2 border rounded"
+                                placeholder="Department"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Birth Date</label>
+                              <input
+                                type="date"
+                                value={editingRecord.birth_date}
+                                onChange={(e) => setEditingRecord({
+                                  ...editingRecord,
+                                  birth_date: e.target.value
+                                })}
+                                className="w-full p-2 border rounded"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Date Hired</label>
+                              <input
+                                type="date"
+                                value={editingRecord.date_hired}
+                                onChange={(e) => setEditingRecord({
+                                  ...editingRecord,
+                                  date_hired: e.target.value
+                                })}
+                                className="w-full p-2 border rounded"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact</label>
+                              <input
+                                type="text"
+                                value={editingRecord.emergency_contact}
+                                onChange={(e) => setEditingRecord({
+                                  ...editingRecord,
+                                  emergency_contact: e.target.value
+                                })}
+                                className="w-full p-2 border rounded"
+                                placeholder="Emergency Contact"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Phone</label>
+                              <input
+                                type="text"
+                                value={editingRecord.emergency_phone}
+                                onChange={(e) => setEditingRecord({
+                                  ...editingRecord,
+                                  emergency_phone: e.target.value
+                                })}
+                                className="w-full p-2 border rounded"
+                                placeholder="Emergency Phone"
+                              />
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                              <input
+                                type="text"
+                                value={editingRecord.address}
+                                onChange={(e) => setEditingRecord({
+                                  ...editingRecord,
+                                  address: e.target.value
+                                })}
+                                className="w-full p-2 border rounded"
+                                placeholder="Address"
+                              />
+                            </div>
+                          </div>
                         ) : (
                           <>
                             <input

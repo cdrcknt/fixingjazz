@@ -96,38 +96,39 @@ const DashboardContent = ({ user }) => {
       </div>
 
       <div className="p-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <StatCard
-  title="Today's Orders"
-  value={loading ? "Loading..." : todayOrders.toString()}
-  icon={ShoppingBag}
-  change={loading ? "Loading..." : `${todayOrders} orders today`}
-  changeType="neutral"
-/>
+      
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+  <StatCard
+    title="Today's Orders"
+    value={loading ? "Loading..." : String(todayOrders)} // Convert to string
+    icon={ShoppingBag}
+    change={loading ? "Loading..." : `${todayOrders} orders today`}
+    changeType="neutral"
+  />
+  <StatCard
+    title="Total Sales"
+    value={loading ? "Loading..." : `$${totalSales.toFixed(2)}`}
+    icon={DollarSign}
+    change={loading ? "Loading..." : `Revenue today`}
+    changeType="neutral"
+  />
+  <StatCard
+    title="Active Staff"
+    value={loading ? "Loading..." : String(activeStaff)} // Convert to string
+    icon={Users}
+    change={loading ? "Loading..." : `Total employees`}
+    changeType="neutral"
+  />
+  <StatCard
+    title="Low Stock Items"
+    value={loading ? "Loading..." : String(lowStockCount)} // Convert to string
+    icon={Package}
+    change="Items below threshold"
+    changeType="neutral"
+    isAlert={lowStockCount > 0}
+  />
+</div>
 
-          <StatCard
-            title="Total Sales"
-            value={loading ? "Loading..." : `$${totalSales.toFixed(2)}`}
-            icon={DollarSign}
-            change={loading ? "Loading..." : `Revenue today`}
-            changeType="neutral"
-          />
-          <StatCard
-            title="Active Staff"
-            value={loading ? "Loading..." : activeStaff.toString()}
-            icon={Users}
-            change={loading ? "Loading..." : `Total employees`}
-            changeType="neutral"
-          />
-          <StatCard
-            title="Low Stock Items"
-            value={loading ? "Loading..." : lowStockCount.toString()}
-            icon={Package}
-            change="Items below threshold"
-            changeType="neutral"
-            isAlert={lowStockCount > 0}
-          />
-        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
