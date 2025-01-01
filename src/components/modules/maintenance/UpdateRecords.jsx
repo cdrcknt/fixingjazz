@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabaseClient';
-import { Pencil, Trash2, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { updateEmployee, deleteEmployee } from '../../../utils/employee/employeeService';
+import EditForm from './components/EditForm';
+import RecordItem from './components/RecordItem';
 
 const UpdateRecords = () => {
   const [activeTab, setActiveTab] = useState('employees');
   const [records, setRecords] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
   const [editingRecord, setEditingRecord] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -16,7 +18,6 @@ const UpdateRecords = () => {
   }, [activeTab]);
 
   const fetchRecords = async () => {
-    setLoading(true);
     try {
       const { data, error } = await supabase
         .from(activeTab)
@@ -37,6 +38,7 @@ const UpdateRecords = () => {
     try {
       setLoading(true);
       setError('');
+      
       if (activeTab === 'employees') {
         await updateEmployee(record);
       } else {
@@ -46,6 +48,7 @@ const UpdateRecords = () => {
           .eq('id', record.id);
         if (error) throw error;
       }
+      
       setEditingRecord(null);
       await fetchRecords();
       setError('');
@@ -63,6 +66,7 @@ const UpdateRecords = () => {
     try {
       setLoading(true);
       setError('');
+      
       if (activeTab === 'employees') {
         await deleteEmployee(id);
       } else {
@@ -72,6 +76,7 @@ const UpdateRecords = () => {
           .eq('id', id);
         if (error) throw error;
       }
+      
       await fetchRecords();
       setError('');
     } catch (error) {
@@ -82,20 +87,16 @@ const UpdateRecords = () => {
     }
   };
 
-  const filteredRecords = records.filter(record => {
-    const searchString = searchTerm.toLowerCase();
-    return activeTab === 'employees'
-      ? record.name.toLowerCase().includes(searchString) || 
-        record.email.toLowerCase().includes(searchString)
-      : record.name.toLowerCase().includes(searchString) || 
-        record.product_id.toLowerCase().includes(searchString);
-  });
+  const filteredRecords = records.filter(record =>
+    record.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    record.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 mb-6">
         <h3 className="text-xl font-semibold text-gray-800 mb-2">Update Records</h3>
-        <p className="text-gray-600">Manage and update system records</p>
+        <p className="text-gray-600">Update or remove system records</p>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -147,228 +148,33 @@ const UpdateRecords = () => {
                 <p className="text-gray-500 mt-2">Loading records...</p>
               </div>
             ) : (
-              <div className="grid gap-4">
+              <div className="space-y-4">
                 {filteredRecords.map((record) => (
                   <div
                     key={record.id}
-                    className="bg-gray-50 p-4 rounded-lg border border-gray-100 hover:shadow-md transition-shadow"
+                    className="bg-gray-50 rounded-lg border border-gray-100 p-4 hover:shadow-md transition-shadow"
                   >
                     {editingRecord?.id === record.id ? (
-                      <div className="space-y-4">
-                        {activeTab === 'employees' ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                              <input
-                                type="text"
-                                value={editingRecord.name}
-                                onChange={(e) => setEditingRecord({
-                                  ...editingRecord,
-                                  name: e.target.value
-                                })}
-                                className="w-full p-2 border rounded"
-                                placeholder="Full Name"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                              <input
-                                type="email"
-                                value={editingRecord.email}
-                                onChange={(e) => setEditingRecord({
-                                  ...editingRecord,
-                                  email: e.target.value
-                                })}
-                                className="w-full p-2 border rounded"
-                                placeholder="Email"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                              <select
-                                value={editingRecord.role}
-                                onChange={(e) => setEditingRecord({
-                                  ...editingRecord,
-                                  role: e.target.value
-                                })}
-                                className="w-full p-2 border rounded"
-                              >
-                                <option value="Barista">Barista</option>
-                                <option value="Cashier">Cashier</option>
-                                <option value="Manager">Manager</option>
-                                <option value="Supervisor">Supervisor</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
-                              <input
-                                type="text"
-                                value={editingRecord.position}
-                                onChange={(e) => setEditingRecord({
-                                  ...editingRecord,
-                                  position: e.target.value
-                                })}
-                                className="w-full p-2 border rounded"
-                                placeholder="Position"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                              <input
-                                type="text"
-                                value={editingRecord.department}
-                                onChange={(e) => setEditingRecord({
-                                  ...editingRecord,
-                                  department: e.target.value
-                                })}
-                                className="w-full p-2 border rounded"
-                                placeholder="Department"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Birth Date</label>
-                              <input
-                                type="date"
-                                value={editingRecord.birth_date}
-                                onChange={(e) => setEditingRecord({
-                                  ...editingRecord,
-                                  birth_date: e.target.value
-                                })}
-                                className="w-full p-2 border rounded"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Date Hired</label>
-                              <input
-                                type="date"
-                                value={editingRecord.date_hired}
-                                onChange={(e) => setEditingRecord({
-                                  ...editingRecord,
-                                  date_hired: e.target.value
-                                })}
-                                className="w-full p-2 border rounded"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact</label>
-                              <input
-                                type="text"
-                                value={editingRecord.emergency_contact}
-                                onChange={(e) => setEditingRecord({
-                                  ...editingRecord,
-                                  emergency_contact: e.target.value
-                                })}
-                                className="w-full p-2 border rounded"
-                                placeholder="Emergency Contact"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Phone</label>
-                              <input
-                                type="text"
-                                value={editingRecord.emergency_phone}
-                                onChange={(e) => setEditingRecord({
-                                  ...editingRecord,
-                                  emergency_phone: e.target.value
-                                })}
-                                className="w-full p-2 border rounded"
-                                placeholder="Emergency Phone"
-                              />
-                            </div>
-                            <div className="md:col-span-2">
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                              <input
-                                type="text"
-                                value={editingRecord.address}
-                                onChange={(e) => setEditingRecord({
-                                  ...editingRecord,
-                                  address: e.target.value
-                                })}
-                                className="w-full p-2 border rounded"
-                                placeholder="Address"
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <input
-                              type="text"
-                              value={editingRecord.name}
-                              onChange={(e) => setEditingRecord({
-                                ...editingRecord,
-                                name: e.target.value
-                              })}
-                              className="w-full p-2 border rounded"
-                              placeholder="Product Name"
-                            />
-                            <input
-                              type="number"
-                              value={editingRecord.price}
-                              onChange={(e) => setEditingRecord({
-                                ...editingRecord,
-                                price: parseFloat(e.target.value)
-                              })}
-                              className="w-full p-2 border rounded"
-                              placeholder="Price"
-                            />
-                            <select
-                              value={editingRecord.category}
-                              onChange={(e) => setEditingRecord({
-                                ...editingRecord,
-                                category: e.target.value
-                              })}
-                              className="w-full p-2 border rounded"
-                            >
-                              <option value="Coffee">Coffee</option>
-                              <option value="Milktea">Milktea</option>
-                              <option value="Frappe">Frappe</option>
-                              <option value="Non-Coffee">Non-Coffee</option>
-                            </select>
-                          </>
-                        )}
-                        <div className="flex justify-end space-x-2">
-                          <button
-                            onClick={() => setEditingRecord(null)}
-                            className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={() => handleUpdate(editingRecord)}
-                            className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-                          >
-                            Save
-                          </button>
-                        </div>
-                      </div>
+                      <EditForm
+                        record={editingRecord}
+                        onSave={handleUpdate}
+                        onCancel={() => setEditingRecord(null)}
+                      />
                     ) : (
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-medium text-gray-900">{record.name}</h4>
-                          <p className="text-gray-500 text-sm">
-                            {activeTab === 'employees'
-                              ? `${record.email} • ${record.role}`
-                              : `${record.product_id} • $${record.price}`}
-                          </p>
-                        </div>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => setEditingRecord(record)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          >
-                            <Pencil className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(record.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
+                      <RecordItem
+                        record={record}
+                        onEdit={() => setEditingRecord(record)}
+                        onDelete={handleDelete}
+                      />
                     )}
                   </div>
                 ))}
+
+                {filteredRecords.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No records found
+                  </div>
+                )}
               </div>
             )}
           </div>
