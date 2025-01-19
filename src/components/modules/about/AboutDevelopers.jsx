@@ -4,7 +4,7 @@ import { Github, Linkedin, Mail } from 'lucide-react';
 const AboutDevelopers = () => {
   const developers = [
     {
-      name: 'Developer 1',
+      name: 'Renz Angelo V. Atienza',
       role: 'Full Stack Developer',
       image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=dev1',
       bio: 'Specialized in frontend development and UI/UX design',
@@ -16,19 +16,24 @@ const AboutDevelopers = () => {
       }
     },
     {
-      name: 'Developer 2',
-      role: 'Backend Developer',
-      image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=dev2',
+      name: 'Cedric Kent C. Centeno',
+      role: 'Full Stack Developer',
+      image: '/src/CENTENO_1X1 v1.jpg',
       bio: 'Expert in database design and API development',
-      skills: ['Node.js', 'PostgreSQL', 'Supabase', 'Express'],
+      skills: [
+        'React', 'Node.js', 'PostgreSQL', 'Supabase', 'Express',
+        'TypeScript', 'Tailwind CSS', 'JavaScript', 'HTML', 'CSS',
+        'Git', 'RESTful APIs', 'JWT', 'Authentication', 'Authorization',
+        'Database Design', 'System Architecture', 'UI/UX Design'
+      ],
       social: {
-        github: '#',
-        linkedin: '#',
-        email: 'dev2@example.com'
+        github: 'https://github.com/cdrcknt',
+        linkedin: 'https://www.linkedin.com/in/cedric-kent-centeno-8a9951274/',
+        email: 'qckccenteno@tip.edu.ph'
       }
     },
     {
-      name: 'Developer 3',
+      name: 'Jose Enriko C. Marquez',
       role: 'Full Stack Developer',
       image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=dev3',
       bio: 'Focused on system architecture and performance optimization',
@@ -55,7 +60,7 @@ const AboutDevelopers = () => {
               <img
                 src={dev.image}
                 alt={dev.name}
-                className="w-32 h-32 mx-auto rounded-full border-4 border-pink-100 mb-4"
+                className="w-32 h-32 mx-auto rounded-full border-4 border-pink-100 mb-4 object-cover"
               />
               <h4 className="text-lg font-semibold text-gray-900">{dev.name}</h4>
               <p className="text-pink-600 font-medium">{dev.role}</p>
